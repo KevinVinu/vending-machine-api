@@ -1,4 +1,4 @@
-# Bug Fixes
+# Bug Fixes (Affynsis AI Project)
 
 ### Slot Creation Limit Not Enforced
 - Issue: Earlier, the API allowed creating unlimited slots, ignoring the configured maximum limit.
