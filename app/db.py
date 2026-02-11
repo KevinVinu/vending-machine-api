@@ -10,8 +10,9 @@ if settings.DATABASE_URL.startswith("sqlite"):
 engine = create_engine(
     settings.DATABASE_URL,
     connect_args=connect_args,
+    future=True, #this is added prevent legacy behaviour warnings
 )
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine,expire_on_commit=False,) #expire addede 
 Base = declarative_base()
 
 

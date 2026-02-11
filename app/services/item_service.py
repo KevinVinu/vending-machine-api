@@ -12,10 +12,10 @@ def add_item_to_slot(db: Session, slot_id: str, data: ItemCreate) -> Item:
         raise ValueError("slot_not_found")
     if slot.current_item_count + data.quantity > slot.capacity:
         raise ValueError("capacity_exceeded")
-    if slot.current_item_count + data.quantity < settings.MAX_ITEMS_PER_SLOT:
-        raise ValueError("capacity_exceeded")
+    
     item = Item(
         name=data.name,
+
         price=data.price,
         slot_id=slot_id,
         quantity=data.quantity,
@@ -35,11 +35,14 @@ def bulk_add_items(db: Session, slot_id: str, entries: list[ItemBulkEntry]) -> i
     for e in entries:
         if e.quantity <= 0:
             continue
+        if slot.current_item_count + e.quantity > slot.capacity:
+            raise ValueError("capacity_exceeded")   #base condition added
         item = Item(name=e.name, price=e.price, slot_id=slot_id, quantity=e.quantity)
         db.add(item)
+        slot.current_item_count += e.quantity
         added += 1
-        db.commit()
-        time.sleep(0.05)  # demo: widens race window vs purchase
+    db.commit()   #commit only if all the values gett added not in between the loop as partial values can get added
+    time.sleep(0.05)  # demo: widens race window vs purchase
     return added
 
 
@@ -58,10 +61,8 @@ def update_item_price(db: Session, item_id: str, price: int) -> None:
     item = get_item_by_id(db, item_id)
     if not item:
         raise ValueError("item_not_found")
-    prev_updated = item.updated_at
     item.price = price
-    item.updated_at = prev_updated
-    db.commit()
+    db.commit()  #just commit after changing the item price
 
 
 def remove_item_quantity(
@@ -76,11 +77,11 @@ def remove_item_quantity(
     if quantity is not None:
         to_remove = min(quantity, item.quantity)
         item.quantity -= to_remove
-        slot.current_item_count -= to_remove
+        slot.current_item_count = max(0, slot.current_item_count - to_remove)  #to remove negative counting value
         if item.quantity <= 0:
             db.delete(item)
     else:
-        slot.current_item_count -= item.quantity
+        slot.current_item_count = max(0,slot.current_item_count-item.quantity)
         db.delete(item)
     db.commit()
 
@@ -97,10 +98,10 @@ def bulk_remove_items(
             Item.id.in_(item_ids),
         ).all()
         for item in items:
-            slot.current_item_count -= item.quantity
+            slot.current_item_count = max(0,slot.current_item_count-item.quantity)  #to remove the issue of negative value
             db.delete(item)
     else:
         for item in list(slot.items):
-            slot.current_item_count -= item.quantity
+            slot.current_item_count = max(0,slot.current_item_count-item.quantity)
             db.delete(item)
     db.commit()

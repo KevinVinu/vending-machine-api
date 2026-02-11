@@ -6,6 +6,9 @@ from app.schemas import SlotCreate, SlotFullView, SlotFullViewItem, SlotResponse
 
 
 def create_slot(db: Session, data: SlotCreate) -> Slot:
+    if data.capacity > settings.MAX_ITEMS_PER_SLOT:
+        raise ValueError("Max item capacity reached")   #writing base condition for config.py
+
     count = db.query(Slot).count()
     if count >= settings.MAX_SLOTS:
         raise ValueError("slot_limit_reached")

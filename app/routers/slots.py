@@ -32,6 +32,8 @@ def create_slot(data: SlotCreate, db: Session = Depends(get_db)):
             current_item_count=slot.current_item_count,
         )
     except ValueError as e:
+        if str(e) == "Max item capacity reached":
+            raise HTTPException(status_code=409, detail="Max item capacity reached") 
         if str(e) == "slot_limit_reached":
             raise HTTPException(status_code=400, detail="Slot limit reached")
         if str(e) == "slot_code_exists":
