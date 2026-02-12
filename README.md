@@ -48,11 +48,10 @@
 - Fix: Added checks to raise ValueError if data.capacity > MAX_ITEMS_PER_SLOT or total slots exceed MAX_SLOTS; also ensured duplicate slot codes are rejected.
 - Result: Slot creation now respects configuration limits and prevents duplicate codes, maintaining API consistency.
 
-### Database Models Cascade & ForeignKey Fix
-- Issue: Earlier, deleting a slot automatically deleted all related items due to cascade="all, delete-orphan" and ondelete="CASCADE", which could lead to unintended data loss.
-- Impact: Removing a slot could erase important item data without explicit intent, affecting audit and inventory tracking.
-- Fix: Updated cascade to "save-update, merge" and ondelete to "SET NULL" to preserve items when a slot is deleted.
-- Result: Slot deletions no longer remove items automatically; items now retain their data for accurate inventory management.
+### Database Models Cascade & ForeignKey Update
+- Issue: Previously, deleting a slot did not remove its associated items, which could leave orphaned records and inconsistent inventory data.
+- Fix: Updated the relationship to use cascade="all, delete-orphan" and ondelete="CASCADE", so that deleting a slot automatically removes all related items.
+- Result: Slot deletions now cleanly remove associated items, preventing orphan records and ensuring accurate inventory management.
 
 ### Database Session & Engine Configuration Fix
 - Issue: Earlier, the database engine and session had legacy behaviors that caused warnings and potential unexpected session expiration.
